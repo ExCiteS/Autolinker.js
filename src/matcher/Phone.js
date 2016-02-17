@@ -11,18 +11,20 @@
 Autolinker.matcher.Phone = Autolinker.Util.extend( Autolinker.matcher.Matcher, {
 
 	/**
-	 * The regular expression to match Phone numbers. Example match:
+	 * The regular expression to match Phone numbers.
+	 * 
+	 * Example match:
 	 *
 	 *     (123) 456-7890
 	 *     123 456 7890
 	 *     123-456-7890
 	 *
-	 *     ...added support for:
+	 * Also UK numbers:
 	 *
 	 *     020 1234 5678
 	 *     0201 234 5678
-	 *     +44 1234 5678
-	 *     +44 7460 232228
+	 *     +4420 1234 5678
+	 *     +44 7777 123456
 	 *     
 	 *
 	 * This regular expression has the following capturing groups:
