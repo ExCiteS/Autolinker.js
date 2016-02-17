@@ -57,6 +57,16 @@ describe( "Autolinker.matcher.Phone", function() {
 			MatchChecker.expectPhoneMatch( matches[ 0 ], '1234567890', 7 );
 		} );
 
+		it( 'should return an array of multiple UK phone numbers', function() {
+			var matches = matcher.parseMatches( 'UK numbers might be 020 2345 4678 or 0202 345 6789 or +4420 1234 5678 or +44 7777 123456' );
+
+			expect( matches.length ).toBe( 4 );
+			MatchChecker.expectPhoneMatch( matches[ 0 ], '02023454678', 20 );
+			MatchChecker.expectPhoneMatch( matches[ 1 ], '02023456789', 37 );
+			MatchChecker.expectPhoneMatch( matches[ 2 ], '442012345678', 54 );
+			MatchChecker.expectPhoneMatch( matches[ 3 ], '447777123456', 73 );
+		} );
+
 	} );
 
 

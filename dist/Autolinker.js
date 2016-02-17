@@ -2912,6 +2912,16 @@ Autolinker.matcher.Phone = Autolinker.Util.extend( Autolinker.matcher.Matcher, {
 	 * The regular expression to match Phone numbers. Example match:
 	 *
 	 *     (123) 456-7890
+	 *     123 456 7890
+	 *     123-456-7890
+	 *
+	 *     ...added support for:
+	 *
+	 *     020 1234 5678
+	 *     0201 234 5678
+	 *     +44 1234 5678
+	 *     +44 7460 232228
+	 *     
 	 *
 	 * This regular expression has the following capturing groups:
 	 *
@@ -2920,7 +2930,9 @@ Autolinker.matcher.Phone = Autolinker.Util.extend( Autolinker.matcher.Matcher, {
 	 * @private
 	 * @property {RegExp} matcherRegex
 	 */
-	matcherRegex : /(?:(\+)?\d{1,3}[-\040.])?\(?\d{3}\)?[-\040.]?\d{3}[-\040.]\d{4}/g,  // ex: (123) 456-7890, 123 456 7890, 123-456-7890, etc.
+	// matcherRegex : /(?:(\+)?\d{1,3}[-\040.])?\(?\d{3}\)?[-\040.]?\d{3}[-\040.]\d{4}/g,
+	// matcherRegex: /(?:(\+)?\d{1,4}[-\040.])?\(?\d{1,4}\)?[-\040.]?\d{2,5}[-\040.]\d{4,6}/g,
+	matcherRegex: /(?:(\+)?\d{1,4}[-\040.])?\(?\d{1,4}\)?[-\040.]?\d{3,5}[-\040.]\d{4,6}/g,
 
 	/**
 	 * @inheritdoc
