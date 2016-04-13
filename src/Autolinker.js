@@ -111,6 +111,8 @@
 var Autolinker = function( cfg ) {
 	cfg = cfg || {};
 
+	this.version = Autolinker.version;
+
 	this.urls = this.normalizeUrlsCfg( cfg.urls );
 	this.email = typeof cfg.email === 'boolean' ? cfg.email : true;
 	this.twitter = typeof cfg.twitter === 'boolean' ? cfg.twitter : true;
@@ -133,6 +135,47 @@ var Autolinker = function( cfg ) {
 	this.matchers = null;
 	this.tagBuilder = null;
 };
+
+
+
+/**
+ * Automatically links URLs, Email addresses, Phone Numbers, Twitter handles,
+ * and Hashtags found in the given chunk of HTML. Does not link URLs found
+ * within HTML tags.
+ *
+ * For instance, if given the text: `You should go to http://www.yahoo.com`,
+ * then the result will be `You should go to &lt;a href="http://www.yahoo.com"&gt;http://www.yahoo.com&lt;/a&gt;`
+ *
+ * Example:
+ *
+ *     var linkedText = Autolinker.link( "Go to google.com", { newWindow: false } );
+ *     // Produces: "Go to <a href="http://google.com">google.com</a>"
+ *
+ * @static
+ * @param {String} textOrHtml The HTML or text to find matches within (depending
+ *   on if the {@link #urls}, {@link #email}, {@link #phone}, {@link #twitter},
+ *   and {@link #hashtag} options are enabled).
+ * @param {Object} [options] Any of the configuration options for the Autolinker
+ *   class, specified in an Object (map). See the class description for an
+ *   example call.
+ * @return {String} The HTML text, with matches automatically linked.
+ */
+Autolinker.link = function( textOrHtml, options ) {
+	var autolinker = new Autolinker( options );
+	return autolinker.link( textOrHtml );
+};
+
+
+/**
+ * @static
+ * @property {String} version (readonly)
+ *
+ * The Autolinker version number in the form major.minor.patch
+ *
+ * Ex: 0.25.1
+ */
+Autolinker.version = '/* @echo VERSION */';
+
 
 Autolinker.prototype = {
 	constructor : Autolinker,  // fix constructor property
@@ -208,7 +251,7 @@ Autolinker.prototype = {
 	 */
 
 	/**
-	 * @cfg {Number/Object} truncate
+	 * @cfg {Number/Object} [truncate=0]
 	 *
 	 * ## Number Form
 	 *
@@ -226,6 +269,9 @@ Autolinker.prototype = {
 	 *     truncate: 25
 	 *
 	 *
+	 *  Defaults to `0` for "no truncation."
+	 *
+	 *
 	 * ## Object Form
 	 *
 	 * An Object may also be provided with two properties: `length` (Number) and
@@ -236,8 +282,8 @@ Autolinker.prototype = {
 	 *
 	 *     truncate: { length: 25, location: 'middle' }
 	 *
-	 * @cfg {Number} truncate.length How many characters to allow before
-	 *   truncation will occur.
+	 * @cfg {Number} [truncate.length=0] How many characters to allow before
+	 *   truncation will occur. Defaults to `0` for "no truncation."
 	 * @cfg {"end"/"middle"/"smart"} [truncate.location="end"]
 	 *
 	 * - 'end' (default): will truncate up to the number of characters, and then
@@ -286,6 +332,14 @@ Autolinker.prototype = {
 	 *   for details.
 	 */
 
+
+	/**
+	 * @property {String} version (readonly)
+	 *
+	 * The Autolinker version number in the form major.minor.patch
+	 *
+	 * Ex: 0.25.1
+	 */
 
 	/**
 	 * @private
@@ -415,20 +469,8 @@ Autolinker.prototype = {
 		// And finally, remove matches for match types that have been turned
 		// off. We needed to have all match types turned on initially so that
 		// things like hashtags could be filtered out if they were really just
-		// part of a URL match (as a named anchor).
-		if( !this.hashtag ) matches = matches.filter( function( match ) { return match.getType() !== 'hashtag'; } );
-		if( !this.email )   matches = matches.filter( function( match ) { return match.getType() !== 'email'; } );
-		if( !this.phone )   matches = matches.filter( function( match ) { return match.getType() !== 'phone'; } );
-		if( !this.twitter ) matches = matches.filter( function( match ) { return match.getType() !== 'twitter'; } );
-		if( !this.urls.schemeMatches ) {
-			matches = matches.filter( function( m ) { return m.getType() !== 'url' || m.getUrlMatchType() !== 'scheme'; } );
-		}
-		if( !this.urls.wwwMatches ) {
-			matches = matches.filter( function( m ) { return m.getType() !== 'url' || m.getUrlMatchType() !== 'www'; } );
-		}
-		if( !this.urls.tldMatches ) {
-			matches = matches.filter( function( m ) { return m.getType() !== 'url' || m.getUrlMatchType() !== 'tld'; } );
-		}
+		// part of a URL match (for instance, as a named anchor).
+		matches = this.removeUnwantedMatches( matches );
 
 		return matches;
 	},
@@ -455,6 +497,38 @@ Autolinker.prototype = {
 			while( i + 1 < matches.length && matches[ i + 1 ].getOffset() <= endIdx ) {
 				matches.splice( i + 1, 1 );
 			}
+		}
+
+		return matches;
+	},
+
+
+	/**
+	 * Removes matches for matchers that were turned off in the options. For
+	 * example, if {@link #hashtag hashtags} were not to be matched, we'll
+	 * remove them from the `matches` array here.
+	 *
+	 * @private
+	 * @param {Autolinker.match.Match[]} matches The array of matches to remove
+	 *   the unwanted matches from. Note: this array is mutated for the
+	 *   removals.
+	 * @return {Autolinker.match.Match[]} The mutated input `matches` array.
+	 */
+	removeUnwantedMatches : function( matches ) {
+		var remove = Autolinker.Util.remove;
+
+		if( !this.hashtag ) remove( matches, function( match ) { return match.getType() === 'hashtag'; } );
+		if( !this.email )   remove( matches, function( match ) { return match.getType() === 'email'; } );
+		if( !this.phone )   remove( matches, function( match ) { return match.getType() === 'phone'; } );
+		if( !this.twitter ) remove( matches, function( match ) { return match.getType() === 'twitter'; } );
+		if( !this.urls.schemeMatches ) {
+			remove( matches, function( m ) { return m.getType() === 'url' && m.getUrlMatchType() === 'scheme'; } );
+		}
+		if( !this.urls.wwwMatches ) {
+			remove( matches, function( m ) { return m.getType() === 'url' && m.getUrlMatchType() === 'www'; } );
+		}
+		if( !this.urls.tldMatches ) {
+			remove( matches, function( m ) { return m.getType() === 'url' && m.getUrlMatchType() === 'tld'; } );
 		}
 
 		return matches;
@@ -574,8 +648,7 @@ Autolinker.prototype = {
 
 		} else {  // replaceFnResult === true, or no/unknown return value from function
 			// Perform Autolinker's default anchor tag generation
-			var tagBuilder = this.getTagBuilder(),
-			    anchorTag = tagBuilder.build( match );  // returns an Autolinker.HtmlTag instance
+			var anchorTag = match.buildTag();  // returns an Autolinker.HtmlTag instance
 
 			return anchorTag.toAnchorString();
 		}
@@ -609,13 +682,15 @@ Autolinker.prototype = {
 	 */
 	getMatchers : function() {
 		if( !this.matchers ) {
-			var matchersNs = Autolinker.matcher;
+			var matchersNs = Autolinker.matcher,
+			    tagBuilder = this.getTagBuilder();
+
 			var matchers = [
-				new matchersNs.Hashtag( { serviceName: this.hashtag } ),
-				new matchersNs.Email(),
-				new matchersNs.Phone(),
-				new matchersNs.Twitter(),
-				new matchersNs.Url( { stripPrefix: this.stripPrefix } )
+				new matchersNs.Hashtag( { tagBuilder: tagBuilder, serviceName: this.hashtag } ),
+				new matchersNs.Email( { tagBuilder: tagBuilder } ),
+				new matchersNs.Phone( { tagBuilder: tagBuilder } ),
+				new matchersNs.Twitter( { tagBuilder: tagBuilder } ),
+				new matchersNs.Url( { tagBuilder: tagBuilder, stripPrefix: this.stripPrefix } )
 			];
 
 			return ( this.matchers = matchers );
@@ -661,34 +736,6 @@ Autolinker.prototype = {
 		return tagBuilder;
 	}
 
-};
-
-
-/**
- * Automatically links URLs, Email addresses, Phone Numbers, Twitter handles,
- * and Hashtags found in the given chunk of HTML. Does not link URLs found
- * within HTML tags.
- *
- * For instance, if given the text: `You should go to http://www.yahoo.com`,
- * then the result will be `You should go to &lt;a href="http://www.yahoo.com"&gt;http://www.yahoo.com&lt;/a&gt;`
- *
- * Example:
- *
- *     var linkedText = Autolinker.link( "Go to google.com", { newWindow: false } );
- *     // Produces: "Go to <a href="http://google.com">google.com</a>"
- *
- * @static
- * @param {String} textOrHtml The HTML or text to find matches within (depending
- *   on if the {@link #urls}, {@link #email}, {@link #phone}, {@link #twitter},
- *   and {@link #hashtag} options are enabled).
- * @param {Object} [options] Any of the configuration options for the Autolinker
- *   class, specified in an Object (map). See the class description for an
- *   example call.
- * @return {String} The HTML text, with matches automatically linked.
- */
-Autolinker.link = function( textOrHtml, options ) {
-	var autolinker = new Autolinker( options );
-	return autolinker.link( textOrHtml );
 };
 
 

@@ -17,8 +17,8 @@ describe( "Autolinker", function() {
 
 		describe( "no configs", function() {
 
-			it( "should default to the default options if no `cfg` object is provided", function() {
-				expect( Autolinker.link( "Welcome to google.com" ) ).toBe( 'Welcome to <a href="http://google.com" target="_blank">google.com</a>' );
+			it( "should default to the default options if no `cfg` object is provided (namely, `newWindow: true`)", function() {
+				expect( Autolinker.link( "Welcome to google.com" ) ).toBe( 'Welcome to <a href="http://google.com" target="_blank" rel="noopener noreferrer">google.com</a>' );
 			} );
 
 		} );
@@ -1135,6 +1135,12 @@ describe( "Autolinker", function() {
 			} );
 
 
+			it( "should NOT automatically link an image tag with incorrect HTML attribute spacing", function() {
+				var result = autolinker.link( '<img src="https://ssl.gstatic.com/welcome_calendar.png" alt="Calendar" style="display:block;"width="129"height="129"/>' );
+				expect( result ).toBe( '<img src="https://ssl.gstatic.com/welcome_calendar.png" alt="Calendar" style="display:block;"width="129"height="129"/>' );
+			} );
+
+
 			it( "should NOT automatically link an image tag with a URL inside it, inside an anchor tag", function() {
 				var result = autolinker.link( '<a href="http://google.com"><img src="http://google.com/someImage.jpg" /></a>' );
 				expect( result ).toBe( '<a href="http://google.com"><img src="http://google.com/someImage.jpg" /></a>' );
@@ -1410,9 +1416,9 @@ describe( "Autolinker", function() {
 			} );
 
 
-			it( "should add target=\"_blank\" when the 'newWindow' option is set to true", function() {
+			it( "should add target=\"_blank\" and rel=\"noopener noreferrer\" when the 'newWindow' option is set to true (see https://mathiasbynens.github.io/rel-noopener/ about the 'rel' attribute, which prevents a potential phishing attack)", function() {
 				var result = Autolinker.link( "Test http://url.com", { newWindow: true } );
-				expect( result ).toBe( 'Test <a href="http://url.com" target="_blank">url.com</a>' );
+				expect( result ).toBe( 'Test <a href="http://url.com" target="_blank" rel="noopener noreferrer">url.com</a>' );
 			} );
 
 		} );
@@ -1465,6 +1471,20 @@ describe( "Autolinker", function() {
 
 			describe( 'number form', function() {
 
+				it( "should not perform any truncation if the `truncate` option is not passed in", function() {
+					var result = Autolinker.link( "Test http://url.com/with/path", { newWindow: false } );
+
+					expect( result ).toBe( 'Test <a href="http://url.com/with/path">url.com/with/path</a>' );
+				} );
+
+
+				it( "should not perform any truncation if `truncate` is 0", function() {
+					var result = Autolinker.link( "Test http://url.com/with/path", { truncate: 0, newWindow: false } );
+
+					expect( result ).toBe( 'Test <a href="http://url.com/with/path">url.com/with/path</a>' );
+				} );
+
+
 				it( "should truncate long a url/email/twitter to the given number of characters with the 'truncate' option specified", function() {
 					var result = Autolinker.link( "Test http://url.com/with/path", { truncate: 12, newWindow: false } );
 
@@ -1489,6 +1509,20 @@ describe( "Autolinker", function() {
 
 
 			describe( 'object form (with `length` and `location` properties)', function() {
+
+				it( "should not perform any truncation if `truncate.length` is not passed in", function() {
+					var result = Autolinker.link( "Test http://url.com/with/path", { truncate: { location: 'end' }, newWindow: false } );
+
+					expect( result ).toBe( 'Test <a href="http://url.com/with/path">url.com/with/path</a>' );
+				} );
+
+
+				it( "should not perform any truncation if `truncate.length` is 0", function() {
+					var result = Autolinker.link( "Test http://url.com/with/path", { truncate: { length: 0 }, newWindow: false } );
+
+					expect( result ).toBe( 'Test <a href="http://url.com/with/path">url.com/with/path</a>' );
+				} );
+
 
 				it( 'should default the `location` to "end" if it is not provided', function() {
 					var result = Autolinker.link( "Test http://url.com/with/path", { truncate: { length: 12 }, newWindow: false } );
@@ -1523,32 +1557,32 @@ describe( "Autolinker", function() {
 		describe( "`className` option", function() {
 
 			it( "should not add className when the 'className' option is not a string with at least 1 character", function() {
-				var result = Autolinker.link( "Test http://url.com" );
-				expect( result ).toBe( 'Test <a href="http://url.com" target="_blank">url.com</a>' );
+				var result = Autolinker.link( "Test http://url.com", { newWindow: false } );
+				expect( result ).toBe( 'Test <a href="http://url.com">url.com</a>' );
 
-				result = Autolinker.link( "Test http://url.com", { className: null } );
-				expect( result ).toBe( 'Test <a href="http://url.com" target="_blank">url.com</a>' );
+				result = Autolinker.link( "Test http://url.com", { newWindow: false, className: null } );
+				expect( result ).toBe( 'Test <a href="http://url.com">url.com</a>' );
 
-				result = Autolinker.link( "Test http://url.com", { className: "" } );
-				expect( result ).toBe( 'Test <a href="http://url.com" target="_blank">url.com</a>' );
+				result = Autolinker.link( "Test http://url.com", { newWindow: false, className: "" } );
+				expect( result ).toBe( 'Test <a href="http://url.com">url.com</a>' );
 			} );
 
 
 			it( "should add className to links", function() {
-				var result = Autolinker.link( "Test http://url.com", { className: 'myLink' } );
-				expect( result ).toBe( 'Test <a href="http://url.com" class="myLink myLink-url" target="_blank">url.com</a>' );
+				var result = Autolinker.link( "Test http://url.com", { newWindow: false, className: 'myLink' } );
+				expect( result ).toBe( 'Test <a href="http://url.com" class="myLink myLink-url">url.com</a>' );
 			} );
 
 
 			it( "should add className to email links", function() {
-				var result = Autolinker.link( "Iggy's email is mr@iggypop.com", { email: true, className: 'myLink' } );
-				expect( result ).toBe( 'Iggy\'s email is <a href="mailto:mr@iggypop.com" class="myLink myLink-email" target="_blank">mr@iggypop.com</a>' );
+				var result = Autolinker.link( "Iggy's email is mr@iggypop.com", { newWindow: false, email: true, className: 'myLink' } );
+				expect( result ).toBe( 'Iggy\'s email is <a href="mailto:mr@iggypop.com" class="myLink myLink-email">mr@iggypop.com</a>' );
 			} );
 
 
 			it( "should add className to twitter links", function() {
-				var result = Autolinker.link( "hi from @iggypopschest", { twitter: true, className: 'myLink' } );
-				expect( result ).toBe( 'hi from <a href="https://twitter.com/iggypopschest" class="myLink myLink-twitter" target="_blank">@iggypopschest</a>' );
+				var result = Autolinker.link( "hi from @iggypopschest", { newWindow: false, twitter: true, className: 'myLink' } );
+				expect( result ).toBe( 'hi from <a href="https://twitter.com/iggypopschest" class="myLink myLink-twitter">@iggypopschest</a>' );
 			} );
 
 		} );
@@ -1848,7 +1882,7 @@ describe( "Autolinker", function() {
 					newWindow : false,
 
 					replaceFn : function( autolinker, match ) {
-						var tag = autolinker.getTagBuilder().build( match );
+						var tag = match.buildTag();
 						tag.setInnerHtml( 'asdf!' );  // just to check that we're replacing with the returned `tag` instance
 						return tag;
 					}
@@ -1863,7 +1897,7 @@ describe( "Autolinker", function() {
 					newWindow : false,
 
 					replaceFn : function( autolinker, match ) {
-						var tag = autolinker.getTagBuilder().build( match );
+						var tag = match.buildTag();
 						tag.addClass( 'test' );
 						tag.addClass( 'test2' );
 						tag.setAttr( 'rel', 'nofollow' );

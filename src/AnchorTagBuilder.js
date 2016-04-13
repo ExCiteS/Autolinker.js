@@ -5,7 +5,8 @@
  * @class Autolinker.AnchorTagBuilder
  * @extends Object
  *
- * Builds anchor (&lt;a&gt;) tags for the Autolinker utility when a match is found.
+ * Builds anchor (&lt;a&gt;) tags for the Autolinker utility when a match is
+ * found.
  *
  * Normally this class is instantiated, configured, and used internally by an
  * {@link Autolinker} instance, but may actually be retrieved in a {@link Autolinker#replaceFn replaceFn}
@@ -90,6 +91,7 @@ Autolinker.AnchorTagBuilder = Autolinker.Util.extend( Object, {
 		}
 		if( this.newWindow ) {
 			attrs[ 'target' ] = "_blank";
+			attrs[ 'rel' ] = "noopener noreferrer";
 		}
 
 		return attrs;
@@ -146,7 +148,7 @@ Autolinker.AnchorTagBuilder = Autolinker.Util.extend( Object, {
 	 */
 	doTruncate : function( anchorText ) {
 		var truncate = this.truncate;
-		if( !truncate ) return anchorText;
+		if( !truncate || !truncate.length ) return anchorText;
 
 		var truncateLength = truncate.length,
 			truncateLocation = truncate.location;

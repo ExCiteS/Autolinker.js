@@ -1,6 +1,3 @@
-If you love and use Autolinker, please consider a $5 donation to support continued development. Many, many hours have gone into this project, and I hope it's helping you out! <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=9HX848RTS975Y&lc=US&item_name=Autolinker%2ejs%20Donation&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted" target="_blank"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" alt="Preview Image"></a>
-
-
 # Autolinker.js
 
 Because I had so much trouble finding a good auto-linking implementation out in
@@ -25,6 +22,9 @@ So, this utility attempts to handle everything. It:
   new one (which would cause doubly-nested anchor tags).
 
 Hope that this utility helps you as well!
+
+Full API Docs: [http://gregjacobs.github.io/Autolinker.js/docs/](http://gregjacobs.github.io/Autolinker.js/docs/#!/api/Autolinker)<br>
+Live Example: [http://gregjacobs.github.io/Autolinker.js/examples/live-example/](http://gregjacobs.github.io/Autolinker.js/examples/live-example/)
 
 
 ## Installation
@@ -228,7 +228,7 @@ A custom replacement function ([replaceFn](http://gregjacobs.github.io/Autolinke
 may be provided to replace url/email/phone/Twitter handle/hashtag matches on an
 individual basis, based on the return from this function.
 
-Full example, for purposes of documenting the API:
+#### Full example, for purposes of documenting the API:
 
 ```javascript
 var input = "...";  // string with URLs, Email Addresses, Twitter Handles, and Hashtags
@@ -241,17 +241,8 @@ var linkedText = Autolinker.link( input, {
         switch( match.getType() ) {
             case 'url' :
                 console.log( "url: ", match.getUrl() );
-
-                if( match.getUrl().indexOf( 'mysite.com' ) === -1 ) {
-                    var tag = autolinker.getTagBuilder().build( match );  // returns an `Autolinker.HtmlTag` instance, which provides mutator methods for easy changes
-                    tag.setAttr( 'rel', 'nofollow' );
-                    tag.addClass( 'external-link' );
-
-                    return tag;
-
-                } else {
-                    return true;  // let Autolinker perform its normal anchor tag replacement
-                }
+                
+                return true;  // let Autolinker perform its normal anchor tag replacement
 
             case 'email' :
                 var email = match.getEmail();
@@ -264,33 +255,48 @@ var linkedText = Autolinker.link( input, {
                 }
 
             case 'phone' :
-                var phoneNumber = match.getPhoneNumber();
-                console.log( phoneNumber );
+                console.log( "Phone Number: ", match.getNumber() );
 
-                return '<a href="http://newplace.to.link.phone.numbers.to/">' + phoneNumber + '</a>';
+                return '<a href="http://newplace.to.link.phone.numbers.to/">' + match.getNumber() + '</a>';
 
             case 'twitter' :
-                var twitterHandle = match.getTwitterHandle();
-                console.log( twitterHandle );
+                console.log( "Twitter Handle: ", match.getTwitterHandle() );
 
-                return '<a href="http://newplace.to.link.twitter.handles.to/">' + twitterHandle + '</a>';
+                return '<a href="http://newplace.to.link.twitter.handles.to/">' + match.getTwitterHandle() + '</a>';
 
             case 'hashtag' :
-                var hashtag = match.getHashtag();
-                console.log( hashtag );
+                console.log( "Hashtag: ", match.getHashtag() );
 
-                return '<a href="http://newplace.to.link.hashtag.handles.to/">' + hashtag + '</a>';
+                return '<a href="http://newplace.to.link.hashtag.handles.to/">' + match.getHashtag() + '</a>';
         }
     }
 } );
 ```
 
+#### Modifying the default generated anchor tag
 
-The function is provided two arguments:
+```javascript
+var input = "...";  // string with URLs, Email Addresses, Twitter Handles, and Hashtags
 
-1. The Autolinker instance that is performing replacements. This can be used to
-   query the options that the Autolinker instance is configured with, or to
-   retrieve its TagBuilder instance (via [autolinker.getTagBuilder()](http://gregjacobs.github.io/Autolinker.js/docs/#!/api/Autolinker-method-getTagBuilder)).
+var linkedText = Autolinker.link( input, {
+    replaceFn : function( autolinker, match ) {
+        console.log( "href = ", match.getAnchorHref() );
+        console.log( "text = ", match.getAnchorText() );
+        
+        var tag = match.buildTag();         // returns an `Autolinker.HtmlTag` instance for an <a> tag
+        tag.setAttr( 'rel', 'nofollow' );   // adds a 'rel' attribute
+        tag.addClass( 'external-link' );    // adds a CSS class
+        tag.setInnerHtml( 'Click here!' );  // sets the inner html for the anchor tag
+
+        return tag;
+    }
+} );
+```
+
+
+The `replaceFn` is provided two arguments:
+
+1. The [Autolinker](http://gregjacobs.github.io/Autolinker.js/docs/#!/api/Autolinker) instance that is performing replacements.
 2. An [Autolinker.match.Match](http://gregjacobs.github.io/Autolinker.js/docs/#!/api/Autolinker.match.Match)
    object which details the match that is to be replaced.
 
@@ -298,14 +304,14 @@ The function is provided two arguments:
 A replacement of the match is made based on the return value of the function.
 The following return values may be provided:
 
-- No return value (`undefined`), or `true` (Boolean): Delegate back to
-  Autolinker to replace the match as it normally would.
-- `false` (Boolean): Do not replace the current match at all - leave as-is.
-- Any String: If a string is returned from the function, the string will be used
-  directly as the replacement HTML for the match.
-- An [Autolinker.HtmlTag](http://gregjacobs.github.io/Autolinker.js/docs/#!/api/Autolinker.HtmlTag)
-  instance, which can be used to build/modify an HTML tag before writing out its
-  HTML text.
+1. No return value (`undefined`), or `true` (Boolean): Delegate back to
+   Autolinker to replace the match as it normally would.
+2. `false` (Boolean): Do not replace the current match at all - leave as-is.
+3. Any String: If a string is returned from the function, the string will be used
+   directly as the replacement HTML for the match.
+4. An [Autolinker.HtmlTag](http://gregjacobs.github.io/Autolinker.js/docs/#!/api/Autolinker.HtmlTag)
+   instance, which can be used to build/modify an HTML tag before writing out its
+   HTML text.
 
 
 ## Full API Docs
@@ -313,13 +319,18 @@ The following return values may be provided:
 The full API docs for Autolinker may be referenced at:
 [http://gregjacobs.github.io/Autolinker.js/docs/](http://gregjacobs.github.io/Autolinker.js/docs/#!/api/Autolinker)
 
+## Live Example
+
+[http://gregjacobs.github.io/Autolinker.js/examples/live-example/](http://gregjacobs.github.io/Autolinker.js/examples/live-example/)
+
+
 
 ## Contributing
 
 Pull requests definitely welcome.
 
 - Make sure to add tests to cover your new functionality/bugfix.
-- Run the `grunt` command to build/test (or alternatively, open the `tests/index.html` file to run the tests).
+- Run the `gulp` command to build/test (or alternatively, open the `tests/index.html` file to run the tests).
 - When committing, please omit checking in the files in the `dist/` folder after building/testing. These are only committed to the repository for users downloading Autolinker via Bower. I will build these files and assign them a version number when merging your PR.
 - Please use tabs for indents! Tabs are better for everybody (individuals can set their editors to different tab sizes based on their visual preferences).
 
