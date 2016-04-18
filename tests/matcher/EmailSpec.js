@@ -45,11 +45,11 @@ describe( "Autolinker.matcher.Email", function() {
 
 
 		it( 'should return an array of multiple email addresses when there are more than one within the string', function() {
-			var matches = matcher.parseMatches( 'Talk to asdf@asdf.com or fdsa@fdsa.com' );
+			var matches = matcher.parseMatches( 'Talk to asdf@asdf.com or fd_sa@fdsa.com' );
 
 			expect( matches.length ).toBe( 2 );
 			MatchChecker.expectEmailMatch( matches[ 0 ], 'asdf@asdf.com', 8 );
-			MatchChecker.expectEmailMatch( matches[ 1 ], 'fdsa@fdsa.com', 25 );
+			MatchChecker.expectEmailMatch( matches[ 1 ], 'fd_sa@fdsa.com', 25 );
 		} );
 
 
