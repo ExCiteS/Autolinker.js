@@ -54,10 +54,10 @@ describe( "Autolinker.matcher.Email", function() {
 
 
 		it( 'a match within parenthesis should be parsed correctly', function() {
-			var matches = matcher.parseMatches( 'Hello (asdf@asdf.com)' );
+			var matches = matcher.parseMatches( 'Hello (as.df@asdf.com)' );
 
 			expect( matches.length ).toBe( 1 );
-			MatchChecker.expectEmailMatch( matches[ 0 ], 'asdf@asdf.com', 7 );
+			MatchChecker.expectEmailMatch( matches[ 0 ], 'as.df@asdf.com', 7 );
 		} );
 
 	} );
